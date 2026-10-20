@@ -43,3 +43,6 @@ out/
 ### OS ###
 .DS_Store
 Thumbs.db
+
+### Claude Code (local launch config) ###
+.claude/

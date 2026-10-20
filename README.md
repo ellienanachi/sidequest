@@ -31,6 +31,7 @@ The app starts on <http://localhost:8080> with the `dev` profile, which uses H2 
 
 | URL                                         | What it shows                      |
 |---------------------------------------------|------------------------------------|
+| `/` (open in a browser)                     | Homepage preview: quest cards, search, category filter |
 | `GET /api/health`                           | `{"status":"ok","app":"SideQuest/s"}` |
 | `GET /api/users`                            | Users (no password hashes)         |
 | `GET /api/listings`, `GET /api/categories`  | Listings and categories            |
@@ -45,7 +46,11 @@ H2 console login: JDBC URL `jdbc:h2:mem:sidequest`, user `sa`, empty password.
 
 ### Sample data (dev profile only)
 
-`DevDataSeeder` inserts 2 students, 1 admin (each with a profile), 1 category and 1 active listing. The password hash is the placeholder `CHANGE_ME`. These are not real accounts.
+`DevDataSeeder` inserts 2 students, 1 admin (each with a profile), 4 categories and 5 active listings. The password hash is the placeholder `CHANGE_ME`. These are not real accounts.
+
+### Homepage preview
+
+`src/main/resources/static/` holds a plain HTML/CSS/JS page that Spring Boot serves at `/`. It reads live data from the API and shows it as quest cards, and it works on both phone and desktop widths. It's a visual draft for the team to discuss: booking, bookmarks, posting and login only show a "coming soon" message. Each part of `js/app.js` (chips, quest card, search) maps to a future React component if the team moves the frontend to React.
 
 ### Switching to MySQL later
 

@@ -41,23 +41,49 @@ public class DevDataSeeder implements CommandLineRunner {
 		}
 
 		User juan = createUser("juan.delacruz@cit.edu", "21-1234-567", "Juan", "Dela Cruz", 3, "BSIT", Role.STUDENT);
-		createUser("maria.santos@cit.edu", "22-2345-678", "Maria", "Santos", 2, "BSCS", Role.STUDENT);
+		User maria = createUser("maria.santos@cit.edu", "22-2345-678", "Maria", "Santos", 2, "BSCS", Role.STUDENT);
 		createUser("admin@cit.edu", "00-0000-001", "Site", "Admin", null, null, Role.ADMIN);
 
-		Category tutoring = new Category();
-		tutoring.setCategoryName("Tutoring");
-		tutoring.setDescription("Peer tutoring and study help");
-		categoryRepository.save(tutoring);
+		Category tutoring = createCategory("Tutoring", "Peer tutoring and study help");
+		Category design = createCategory("Design", "Logos, posters, slides and layouts");
+		Category tech = createCategory("Tech Help", "Laptop fixes, installs and setup");
+		Category errands = createCategory("Errands", "Printing, pickups and deliveries on campus");
 
+		createListing(juan, tutoring, "Java OOP tutoring (1 hour)",
+				"One-on-one help with classes, inheritance, and interfaces.",
+				"150.00", 1, "Mon, Wed, Fri", "Library, Canteen");
+		createListing(maria, design, "Logo and poster design for your org",
+				"Clean, print-ready designs for events and org pages. Two revisions included.",
+				"300.00", 3, "Tue, Thu, Sat", "Online, Canteen");
+		createListing(juan, tech, "Laptop cleanup and software install",
+				"Remove junk, speed up boot, and install IntelliJ, VS Code, or Office for class.",
+				"200.00", 1, "Mon to Fri", "GLE Building lobby");
+		createListing(maria, errands, "Print and deliver your requirements",
+				"Send the file, I print it and bring it to your room before class.",
+				"50.00", 1, "Mon to Sat", "Anywhere on campus");
+		createListing(maria, tutoring, "Calculus 1 review session",
+				"Exam prep for limits and derivatives with practice problems.",
+				"120.00", 2, "Wed, Sat", "Library");
+	}
+
+	private Category createCategory(String name, String description) {
+		Category category = new Category();
+		category.setCategoryName(name);
+		category.setDescription(description);
+		return categoryRepository.save(category);
+	}
+
+	private void createListing(User seller, Category category, String title, String description,
+			String price, int deliveryDays, String availableDays, String meetupSpots) {
 		Listing listing = new Listing();
-		listing.setSeller(juan);
-		listing.setCategory(tutoring);
-		listing.setTitle("Java OOP tutoring (1 hour)");
-		listing.setDescription("One-on-one help with classes, inheritance, and interfaces.");
-		listing.setPrice(new BigDecimal("150.00"));
-		listing.setDeliveryDays(1);
-		listing.setAvailableDays("Mon, Wed, Fri");
-		listing.setMeetupSpots("Library, Canteen");
+		listing.setSeller(seller);
+		listing.setCategory(category);
+		listing.setTitle(title);
+		listing.setDescription(description);
+		listing.setPrice(new BigDecimal(price));
+		listing.setDeliveryDays(deliveryDays);
+		listing.setAvailableDays(availableDays);
+		listing.setMeetupSpots(meetupSpots);
 		listing.setStatus(ListingStatus.ACTIVE);
 		listingRepository.save(listing);
 	}
