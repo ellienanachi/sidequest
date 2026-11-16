@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -14,9 +15,10 @@ public class AccountService {
 
 	private final UserRepository userRepository;
 
-	// TODO: registration, login, email verification, profile editing.
+	// TODO (Objective 1): register with CIT-U email, verify student ID, log in/out, edit profile.
 	@Transactional(readOnly = true)
 	public List<UserDto> getAllUsers() {
-		return userRepository.findAll().stream().map(UserDto::from).toList();
+		LocalDateTime now = LocalDateTime.now();
+		return userRepository.findAll().stream().map(user -> UserDto.from(user, now)).toList();
 	}
 }

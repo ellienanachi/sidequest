@@ -1,41 +1,40 @@
 package com.sidequest.discovery.service;
 
-import com.sidequest.discovery.dto.BookmarkDto;
-import com.sidequest.discovery.repository.BookmarkRepository;
-import com.sidequest.listing.dto.ListingDto;
-import com.sidequest.listing.entity.Listing;
-import com.sidequest.listing.entity.ListingStatus;
-import com.sidequest.listing.repository.ListingRepository;
+import com.sidequest.quest.dto.QuestCardDto;
+import com.sidequest.quest.entity.Quest;
+import com.sidequest.quest.entity.QuestSize;
+import com.sidequest.quest.entity.QuestStatus;
+import com.sidequest.quest.repository.QuestRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
+
+import static com.sidequest.quest.repository.QuestFilters.*;
 
 @Service
 @RequiredArgsConstructor
 public class DiscoveryService {
 
-	private final BookmarkRepository bookmarkRepository;
-	private final ListingRepository listingRepository;
+	private final QuestRepository questRepository;
 
-	// TODO: only return the logged-in user's bookmarks once auth exists.
+	// Quest Board: only approved (OPEN) quests, newest first. Every filter is optional.
+	// TODO (Objective 3): reward and deadline filters, saved quests, location preference,
+	// category follows and alerts.
 	@Transactional(readOnly = true)
-	public List<BookmarkDto> getAllBookmarks() {
-		return bookmarkRepository.findAll().stream().map(BookmarkDto::from).toList();
-	}
+	public List<QuestCardDto> searchBoard(String keyword, Long categoryId, QuestSize size, String location) {
+		Specification<Quest> filter = hasStatus(QuestStatus.OPEN);
+		if (StringUtils.hasText(keyword)) filter = filter.and(mentions(keyword.trim()));
+		if (categoryId != null) filter = filter.and(inCategory(categoryId));
+		if (size != null) filter = filter.and(hasSize(size));
+		if (StringUtils.hasText(location)) filter = filter.and(atLocation(location.trim()));
 
-	// Placeholder search: active listings by category, or by title keyword.
-	// TODO: combine filters (price range, meetup spot, available days), sorting, pagination.
-	@Transactional(readOnly = true)
-	public List<ListingDto> search(String keyword, Long categoryId) {
-		List<Listing> results;
-		if (categoryId != null) {
-			results = listingRepository.findByStatusAndCategoryCategoryId(ListingStatus.ACTIVE, categoryId);
-		} else {
-			String q = (keyword == null) ? "" : keyword;
-			results = listingRepository.findByStatusAndTitleContainingIgnoreCase(ListingStatus.ACTIVE, q);
-		}
-		return results.stream().map(ListingDto::from).toList();
+		return questRepository.findAll(filter, Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+				.map(QuestCardDto::from)
+				.toList();
 	}
 }

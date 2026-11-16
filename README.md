@@ -1,102 +1,132 @@
 # SideQuest/s
 
-A gig marketplace for CIT-U students. Students can offer small services (tutoring, design, errands, and so on) as listings, other students can find and book them, and both sides can review each other after a meetup.
+A guild quest board for CIT-U students. Verified Wildcats post what they need help with as **quests** (printing, tutoring, errands, borrowing equipment), and other students accept and complete them for a reward held in **escrow**. An **energy** system keeps the board fair, and ratings, reviews, guild ranks and admin moderation keep it trustworthy.
 
-> **Status:** starter skeleton. The entities, repositories and read-only placeholder endpoints are in place, but the real features (registration, booking flow, payments, moderation) are still TODO.
+It is a web app that also works on phones (the layout switches to a bottom bar on small screens).
+
+> **Status:** foundation only. The database (all 15 tables from the ERD), the workbook rules, a simulated payment gateway, read-only endpoints and a Quest Board preview are in place. Posting, accepting, paying, login and moderation are still TODO.
+>
+> **Source of truth:** the requirements workbook (`SML_Software_Requirements_Deliverables.xlsx`). The Figma file is the visual reference.
+
+## Team and objectives
+
+| Objective | Modules | Owner | Package |
+|---|---|---|---|
+| 1. Account | Account Management | Hynes Gavin Daugdaug | `account` |
+| 2. Quests | Quest Management, Quest Reposting | Hynes Gavin Daugdaug | `quest` |
+| 3. Discovery | Discovery & Browsing (Quest Board), Quest Alerts | Sean Riley Dela Cruz | `discovery` |
+| 4. Transaction | Quest & Reward Transaction, Energy System and Subscription | Sean Riley Dela Cruz | `transaction` |
+| 5. Community | Community Engagement, Guild Rank | Chad Ellie Sanchez | `community` |
+| 5. Moderation | Admin & Moderation | Chad Ellie Sanchez | `admin` |
+| Shared | Health check, errors, dev sample data | everyone | `common` |
 
 ## Tech stack
 
-| Layer      | Choice                                                   |
-|------------|----------------------------------------------------------|
-| Language   | Java 25 (LTS)                                            |
-| Framework  | Spring Boot 3.5.x (Web, Data JPA, Validation, DevTools)  |
-| Build      | Maven (wrapper included: `mvnw` / `mvnw.cmd`)            |
-| Database   | H2 in-memory (dev), MySQL (later)                        |
-| Other      | Lombok                                                   |
-| Security   | None yet (TODO: add Spring Security + BCrypt)            |
+| Layer | Choice |
+|---|---|
+| Language | Java 25 (LTS) |
+| Framework | Spring Boot 3.5.x (Web, Data JPA, Validation, DevTools) |
+| Build | Maven (wrapper included: `mvnw` / `mvnw.cmd`) |
+| Database | H2 in-memory (dev), PostgreSQL on Render (prod) |
+| Payments | Simulated gateway now; PayMongo test mode later (GCash, Maya, QR Ph) |
+| Frontend | Plain HTML, CSS and JavaScript served by Spring Boot |
+| Security | None yet (TODO: Spring Security + BCrypt) |
 
 ## How to run
 
-Requirements: JDK 25 (LTS; set `JAVA_HOME` to it). Maven itself is not needed because the wrapper downloads it.
+Requirements: JDK 25 with `JAVA_HOME` pointing to it. Maven is not needed because the wrapper downloads it.
 
 ```bash
-# Windows (PowerShell / cmd)
-mvnw.cmd spring-boot:run
+# Windows PowerShell (VS Code terminal)
+.\mvnw.cmd spring-boot:run
 
-# macOS / Linux / Git Bash
+# Git Bash, macOS, Linux
 ./mvnw spring-boot:run
 ```
 
-The app starts on <http://localhost:8080> with the `dev` profile, which uses H2 and loads sample data.
+Open <http://localhost:8080> for the Quest Board. The app uses the `dev` profile: an H2 database that resets on every restart, filled with sample data.
 
-| URL                                         | What it shows                      |
-|---------------------------------------------|------------------------------------|
-| `/` (open in a browser)                     | Homepage preview: quest cards, search, category filter |
-| `GET /api/health`                           | `{"status":"ok","app":"SideQuest/s"}` |
-| `GET /api/users`                            | Users (no password hashes)         |
-| `GET /api/listings`, `GET /api/categories`  | Listings and categories            |
-| `GET /api/search?q=java`, `?categoryId=1`   | Placeholder search (active listings) |
-| `GET /api/bookmarks`                        | Bookmarks                          |
-| `GET /api/bookings`                         | Bookings                           |
-| `GET /api/reviews`, `GET /api/posts`        | Reviews, pitch wall posts          |
-| `GET /api/reports`                          | Reports (admin)                    |
-| `/h2-console`                               | H2 web console                     |
+Run the tests with `./mvnw test`.
 
-H2 console login: JDBC URL `jdbc:h2:mem:sidequest`, user `sa`, empty password.
+| URL | What it shows |
+|---|---|
+| `/` | Quest Board ("Near you"): search, location, size and category filters |
+| `/quest.html?id=1` | Quest details: what is needed, reward, payout after commission |
+| `GET /api/health` | `{"status":"ok","app":"SideQuest/s"}` |
+| `GET /api/quests` | Open quests. Filters: `q`, `categoryId`, `size` (`SMALL`, `MEDIUM`, `LARGE`), `location` |
+| `GET /api/quests/{id}` | One quest with poster, reward and payout |
+| `GET /api/categories` | Quest categories |
+| `GET /api/quest-sizes` | Reward range and energy cost per size |
+| `GET /api/users` | Users with live energy (never the password hash) |
+| `GET /api/acceptances` | Quest acceptances |
+| `/h2-console` | Database console: JDBC URL `jdbc:h2:mem:sidequest`, user `sa`, no password |
 
 ### Sample data (dev profile only)
 
-`DevDataSeeder` inserts 2 students, 1 admin (each with a profile), 4 categories and 5 active listings. The password hash is the placeholder `CHANGE_ME`. These are not real accounts.
+`DevDataSeeder` adds 6 students and 1 admin, 6 categories, 6 open quests, 1 quest waiting for admin review and 1 quest in progress. Names and quests follow the Figma prototype. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
 
-### Homepage preview
+## Workbook rules in the code
 
-`src/main/resources/static/` holds a plain HTML/CSS/JS page that Spring Boot serves at `/`. It reads live data from the API and shows it as quest cards, and it works on both phone and desktop widths. It's a visual draft for the team to discuss: booking, bookmarks, posting and login only show a "coming soon" message. Each part of `js/app.js` (chips, quest card, search) maps to a future React component if the team moves the frontend to React.
+| Rule | Where |
+|---|---|
+| Sizes: Small ₱30–99 (1 energy), Medium ₱100–249 (2), Large ₱250–500 (3) | `quest/entity/QuestSize` |
+| Energy: cap 10 (free) or 20 (Guild Pass), +1 every 30 minutes, accepting costs 1, completing gives 1 back | `transaction/service/EnergyRules` |
+| 10% commission taken when the reward is released; Guild Pass ₱49/month | `transaction/service/RewardRules` |
+| Payment provider interface (charge, refund) | `transaction/gateway/PaymentGateway` |
 
-### Switching to MySQL later
+These rules have unit tests in `src/test`.
 
-1. Create a database named `sidequest`.
-2. Uncomment the MySQL block in `src/main/resources/application.properties`.
-3. Set the environment variables `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` (or use a local `.env`, which is git-ignored). Never commit real passwords.
+### Status values
+
+Quests: `PENDING` (waiting for admin) → `OPEN` (on the board) → `IN_PROGRESS` → `COMPLETED`, or `CANCELLED`, `REJECTED`, `EXPIRED`.
+
+Acceptances (the escrow steps): `ACCEPTED` → `FUNDED` → `DONE` → `COMPLETED`, or `DISPUTED`, `CANCELLED`, `REFUNDED`.
 
 ## Package layout
 
-Base package `com.sidequest`, grouped by objective. Each feature package has the same sub-folders:
+Base package `com.sidequest`. Each feature package has `entity/`, `repository/`, `service/`, `controller/` and `dto/`.
 
 ```
 com.sidequest
-├── account       entity/ repository/ service/ controller/ dto/
-├── listing       entity/ repository/ service/ controller/ dto/
-├── discovery     entity/ repository/ service/ controller/ dto/
-├── transaction   entity/ repository/ service/ controller/ dto/
-├── community     entity/ repository/ service/ controller/ dto/
-├── admin         entity/ repository/ service/ controller/ dto/
-└── common
-    ├── config    DevDataSeeder
-    └── web       HealthController, GlobalExceptionHandler
+├── account       users, profiles
+├── quest         categories, quests, quest_photos
+├── discovery     saved_quests, category_follows, notifications
+├── transaction   quest_acceptances, payments, energy_transactions, gateway/
+├── community     guild_ranks, messages, reviews
+├── admin         reports
+└── common        config (DevDataSeeder), web (health, errors)
 ```
 
 Conventions:
 
 - Controllers return DTOs (Java records), never entities. `passwordHash` is never exposed.
-- All relationships are `LAZY`, and `spring.jpa.open-in-view=false`, so DTOs are built inside `@Transactional` service methods.
-- Status fields are enums: `Role`, `ListingStatus`, `BookingStatus`, `PaymentStatus`, `ReportStatus`.
+- All relationships are `LAZY` and `spring.jpa.open-in-view=false`, so DTOs are built inside `@Transactional` service methods.
+- Table and column names follow the ERD exactly (`users`, `poster_id`, `is_read`, ...).
 
-## Packages and objectives
+## Deploying (later)
 
-| Package       | Objective                       | Entities / endpoints                                          |
-|---------------|---------------------------------|---------------------------------------------------------------|
-| `account`     | Objective 1: Account            | `User`, `Profile`, `/api/users`                               |
-| `listing`     | Objective 2: Listing            | `Listing`, `ListingPhoto`, `Category`, `/api/listings`, `/api/categories` |
-| `discovery`   | Objective 3: Discovery          | `Bookmark`, `/api/bookmarks`, `/api/search`                   |
-| `transaction` | Objective 4: Transaction        | `Booking`, `Payment`, `Notification`, `/api/bookings`         |
-| `community`   | Objective 5: Community and Admin | `Review`, `Message`, `/api/reviews`; extra (pitch wall): `Post`, `Comment`, `/api/posts` |
-| `admin`       | Objective 5: Community and Admin | `Report`, `/api/reports`                                     |
-| `common`      | Shared                          | Health endpoint, exception handler, dev seed data             |
+The workbook plans Render (web service + PostgreSQL). Set these environment variables on the server:
+
+| Variable | Example |
+|---|---|
+| `SPRING_PROFILES_ACTIVE` | `prod` |
+| `DB_URL` | `jdbc:postgresql://<host>:5432/sidequest` |
+| `DB_USERNAME`, `DB_PASSWORD` | from the Render database page |
+
+Never commit real passwords. `.env` files are git-ignored.
+
+## Open questions
+
+- Guild rank titles, point thresholds and how points are earned (Figma shows "Squire, rank 3 of 6").
+- How student IDs are verified (photo upload, admin check, ...).
+- Messages in the ERD have no receiver or read flag, but Figma has an "unread conversations" popup.
+- Energy and refund rules when a quest is cancelled, and the refund window.
+- What happens if a quest giver never funds an accepted quest.
 
 ## TODO
 
-- Spring Security (login, roles, BCrypt password hashing, admin-only endpoints)
+- Spring Security: register with CIT-U email, log in, roles, admin-only endpoints
 - Create/update endpoints with request DTOs and validation
-- Real search filters, pagination
-- Booking, payment and notification flows
-- Tests
+- Accept → fund → done → confirm flow, Guild Pass, ads
+- PayMongo test-mode gateway
+- Objective 5: reviews, reports, messaging, guild ranks, admin moderation
