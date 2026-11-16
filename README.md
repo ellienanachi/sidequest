@@ -29,22 +29,29 @@ It is a web app that also works on phones (the layout switches to a bottom bar o
 | Build | Maven (wrapper included: `mvnw` / `mvnw.cmd`) |
 | Database | H2 in-memory (dev), PostgreSQL on Render (prod) |
 | Payments | Simulated gateway now; PayMongo test mode later (GCash, Maya, QR Ph) |
-| Frontend | Plain HTML, CSS and JavaScript served by Spring Boot |
+| Frontend | React 19 + Vite (JavaScript) in `frontend/`. The old plain HTML pages in `src/main/resources/static` are being moved over to React. |
 | Security | None yet (TODO: Spring Security + BCrypt) |
 
 ## How to run
 
-Requirements: JDK 25 with `JAVA_HOME` pointing to it. Maven is not needed because the wrapper downloads it.
+Requirements: JDK 25 with `JAVA_HOME` pointing to it, and Node.js 20 or newer. Maven is not needed because the wrapper downloads it.
+
+You need two terminals: one for the backend and one for the frontend.
 
 ```bash
-# Windows PowerShell (VS Code terminal)
-.\mvnw.cmd spring-boot:run
+# Terminal 1, project root: Spring Boot backend on http://localhost:8080
+.\mvnw.cmd spring-boot:run        # Windows PowerShell (VS Code terminal)
+./mvnw spring-boot:run            # Git Bash, macOS, Linux
 
-# Git Bash, macOS, Linux
-./mvnw spring-boot:run
+# Terminal 2: React frontend on http://localhost:5173
+cd frontend
+npm install                       # only the first time
+npm run dev
 ```
 
-Open <http://localhost:8080> for the Quest Board. The app uses the `dev` profile: an H2 database that resets on every restart, filled with sample data.
+Open <http://localhost:5173> for the React app. While developing, Vite passes every `/api/...` request on to Spring Boot (see `frontend/vite.config.js`). The old HTML Quest Board is still at <http://localhost:8080> until it's moved to React.
+
+The backend uses the `dev` profile: an H2 database that resets on every restart, filled with sample data.
 
 Run the tests with `./mvnw test`.
 
@@ -125,6 +132,7 @@ Never commit real passwords. `.env` files are git-ignored.
 
 ## TODO
 
+- Move the Quest Board and Quest Details pages to React
 - Spring Security: register with CIT-U email, log in, roles, admin-only endpoints
 - Create/update endpoints with request DTOs and validation
 - Accept → fund → done → confirm flow, Guild Pass, ads

@@ -1,0 +1,49 @@
+/* SideQuest/s colors and fonts from the Figma prototype.
+   Change a color here and it changes everywhere. */
+:root {
+  --forest: #1f3a30;
+  --sage: #7f8b6a;
+  --tan: #c8b48a;
+  --cream: #f4efe6;
+  --cream-deep: #efe6d6;
+  --paper: #fbf8f2;
+  --ink: #1f2a24;
+  --muted: #6d7660;
+
+  --font-display: "Montserrat", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Step 1: backend check page ---------- */
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 48px 16px;
+}
+
+.brand {
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2rem, 6vw, 3rem);
+  color: var(--forest);
+}
+
+.status {
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: var(--cream-deep);
+}
+
+.status-ok { background: var(--forest); color: var(--cream); }
+.status-bad { background: var(--tan); color: var(--ink); }
