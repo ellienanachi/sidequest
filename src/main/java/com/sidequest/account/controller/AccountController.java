@@ -16,7 +16,7 @@ public class AccountController {
 
 	private final AccountService accountService;
 
-	// TODO: restrict to admins once Spring Security is added.
+	// TODO: admin-only once Spring Security is added.
 	@GetMapping
 	public List<UserDto> getUsers() {
 		return accountService.getAllUsers();

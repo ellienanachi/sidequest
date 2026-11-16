@@ -4,13 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
+// Public profile details. One per user.
 @Entity
-@Table(name = "profile")
+@Table(name = "profiles")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,30 +15,16 @@ public class Profile {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "profile_id")
-	private Long profileId;
+	private Long id;
 
-	// One profile per user.
 	@OneToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "user_id", nullable = false, unique = true)
 	private User user;
 
-	@Column(name = "display_name", length = 100)
-	private String displayName;
+	@Column(name = "year_level")
+	private Integer yearLevel;
 
-	@Column(length = 1000)
-	private String bio;
-
-	@Column(name = "profile_picture")
-	private String profilePicture;
-
-	@Column(name = "buyer_rating", precision = 3, scale = 2)
-	private BigDecimal buyerRating;
-
-	@Column(name = "seller_rating", precision = 3, scale = 2)
-	private BigDecimal sellerRating;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
+	// e.g. "BSIT"
+	@Column(length = 100)
+	private String program;
 }

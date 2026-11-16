@@ -1,7 +1,7 @@
 package com.sidequest.community.entity;
 
 import com.sidequest.account.entity.User;
-import com.sidequest.transaction.entity.Booking;
+import com.sidequest.transaction.entity.QuestAcceptance;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,10 +10,11 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-// Each person in a booking can review it once.
+// Rating and comment left after a completed quest. Each side reviews once.
+// The person being reviewed is the other side of the acceptance (giver or adventurer).
 @Entity
-@Table(name = "review",
-		uniqueConstraints = @UniqueConstraint(columnNames = {"booking_id", "reviewer_id"}))
+@Table(name = "reviews",
+		uniqueConstraints = @UniqueConstraint(columnNames = {"acceptance_id", "reviewer_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,22 +22,17 @@ public class Review {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "review_id")
-	private Long reviewId;
+	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "booking_id", nullable = false)
-	private Booking booking;
+	@JoinColumn(name = "acceptance_id", nullable = false)
+	private QuestAcceptance acceptance;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "reviewer_id", nullable = false)
 	private User reviewer;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "reviewee_id", nullable = false)
-	private User reviewee;
-
-	// 1 to 5. TODO: add @Min/@Max on the request DTO when create-review is built.
+	// 1 to 5
 	@Column(nullable = false)
 	private Integer rating;
 

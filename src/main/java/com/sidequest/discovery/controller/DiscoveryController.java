@@ -1,8 +1,8 @@
 package com.sidequest.discovery.controller;
 
-import com.sidequest.discovery.dto.BookmarkDto;
 import com.sidequest.discovery.service.DiscoveryService;
-import com.sidequest.listing.dto.ListingDto;
+import com.sidequest.quest.dto.QuestCardDto;
+import com.sidequest.quest.entity.QuestSize;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,21 +12,19 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/quests")
 @RequiredArgsConstructor
 public class DiscoveryController {
 
 	private final DiscoveryService discoveryService;
 
-	@GetMapping("/bookmarks")
-	public List<BookmarkDto> getBookmarks() {
-		return discoveryService.getAllBookmarks();
-	}
-
-	// e.g. /api/search?q=tutor or /api/search?categoryId=1
-	@GetMapping("/search")
-	public List<ListingDto> search(@RequestParam(name = "q", required = false) String keyword,
-			@RequestParam(name = "categoryId", required = false) Long categoryId) {
-		return discoveryService.search(keyword, categoryId);
+	// The Quest Board, e.g. /api/quests?q=print&size=SMALL&categoryId=1&location=Library
+	@GetMapping
+	public List<QuestCardDto> searchBoard(
+			@RequestParam(name = "q", required = false) String keyword,
+			@RequestParam(name = "categoryId", required = false) Long categoryId,
+			@RequestParam(name = "size", required = false) QuestSize size,
+			@RequestParam(name = "location", required = false) String location) {
+		return discoveryService.searchBoard(keyword, categoryId, size, location);
 	}
 }

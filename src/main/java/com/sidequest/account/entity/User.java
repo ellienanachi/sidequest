@@ -8,7 +8,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-// Table is "users" because USER is a reserved word in H2.
+// A CIT-U student account. One user can be a quest giver, an adventurer, or both.
+// Table is "users" because USER is a reserved word.
 @Entity
 @Table(name = "users")
 @Getter
@@ -18,9 +19,12 @@ public class User {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "user_id")
-	private Long userId;
+	private Long id;
 
+	@Column(name = "student_id", nullable = false, unique = true, length = 20)
+	private String studentId;
+
+	// CIT-U student email, used to log in.
 	@Column(nullable = false, unique = true)
 	private String email;
 
@@ -28,27 +32,35 @@ public class User {
 	@Column(name = "password_hash", nullable = false)
 	private String passwordHash;
 
-	@Column(name = "student_id_number", nullable = false, unique = true, length = 20)
-	private String studentIdNumber;
-
-	@Column(name = "first_name", nullable = false, length = 100)
-	private String firstName;
-
-	@Column(name = "last_name", nullable = false, length = 100)
-	private String lastName;
-
-	@Column(name = "year_level")
-	private Integer yearLevel;
-
-	@Column(length = 100)
-	private String program;
+	@Column(name = "full_name", nullable = false, length = 150)
+	private String fullName;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
 	private Role role = Role.STUDENT;
 
-	@Column(name = "is_verified", nullable = false)
-	private Boolean isVerified = false;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	private UserStatus status = UserStatus.PENDING;
+
+	// Stored energy at energyUpdatedAt. The live value adds recovery since then (see EnergyRules).
+	@Column(nullable = false)
+	private Integer energy = 10;
+
+	@Column(name = "energy_updated_at", nullable = false)
+	private LocalDateTime energyUpdatedAt = LocalDateTime.now();
+
+	// e.g. "CCS Building". Used for the "Near you" board.
+	@Column(name = "preferred_location", length = 100)
+	private String preferredLocation;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	private Tier tier = Tier.FREE;
+
+	// When the Guild Pass runs out. Null for free students.
+	@Column(name = "tier_expires_at")
+	private LocalDateTime tierExpiresAt;
 
 	@CreationTimestamp
 	@Column(name = "created_at", nullable = false, updatable = false)

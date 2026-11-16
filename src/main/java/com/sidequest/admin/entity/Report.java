@@ -9,8 +9,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+// A complaint about a quest or a user, or a dispute about an accepted quest.
 @Entity
-@Table(name = "report")
+@Table(name = "reports")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,23 +19,17 @@ public class Report {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "report_id")
-	private Long reportId;
+	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "reporter_id", nullable = false)
 	private User reporter;
 
-	// The admin who handled it. Null until resolved.
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "resolved_by")
-	private User resolvedBy;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "target_type", nullable = false, length = 20)
+	private ReportTargetType targetType;
 
-	// What was reported, e.g. "LISTING", "USER", "REVIEW".
-	// targetId is a plain id (no FK) because it can point at different tables.
-	@Column(name = "target_type", nullable = false, length = 30)
-	private String targetType;
-
+	// Plain id (no FK) because it can point at a quest, a user or an acceptance.
 	@Column(name = "target_id", nullable = false)
 	private Long targetId;
 
@@ -45,10 +40,12 @@ public class Report {
 	@Column(nullable = false, length = 20)
 	private ReportStatus status = ReportStatus.OPEN;
 
+	// The admin who handled it. Null until resolved.
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "resolved_by")
+	private User resolvedBy;
+
 	@CreationTimestamp
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
-
-	@Column(name = "resolved_at")
-	private LocalDateTime resolvedAt;
 }

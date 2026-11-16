@@ -3,22 +3,32 @@ package com.sidequest.common.config;
 import com.sidequest.account.entity.Profile;
 import com.sidequest.account.entity.Role;
 import com.sidequest.account.entity.User;
+import com.sidequest.account.entity.UserStatus;
 import com.sidequest.account.repository.ProfileRepository;
 import com.sidequest.account.repository.UserRepository;
-import com.sidequest.listing.entity.Category;
-import com.sidequest.listing.entity.Listing;
-import com.sidequest.listing.entity.ListingStatus;
-import com.sidequest.listing.repository.CategoryRepository;
-import com.sidequest.listing.repository.ListingRepository;
+import com.sidequest.community.entity.GuildRank;
+import com.sidequest.community.repository.GuildRankRepository;
+import com.sidequest.quest.entity.Category;
+import com.sidequest.quest.entity.Quest;
+import com.sidequest.quest.entity.QuestSize;
+import com.sidequest.quest.entity.QuestStatus;
+import com.sidequest.quest.repository.CategoryRepository;
+import com.sidequest.quest.repository.QuestRepository;
+import com.sidequest.transaction.entity.QuestAcceptance;
+import com.sidequest.transaction.repository.QuestAcceptanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 // Sample data for local development only (runs with the "dev" profile).
-// Full name used because our entity is also called Profile.
+// Names and quests follow the Figma prototype; rewards follow the workbook's size ranges.
+// Full name used for @Profile because our entity is also called Profile.
 @Component
 @org.springframework.context.annotation.Profile("dev")
 @RequiredArgsConstructor
@@ -29,8 +39,10 @@ public class DevDataSeeder implements CommandLineRunner {
 
 	private final UserRepository userRepository;
 	private final ProfileRepository profileRepository;
+	private final GuildRankRepository guildRankRepository;
 	private final CategoryRepository categoryRepository;
-	private final ListingRepository listingRepository;
+	private final QuestRepository questRepository;
+	private final QuestAcceptanceRepository acceptanceRepository;
 
 	@Override
 	@Transactional
@@ -40,72 +52,104 @@ public class DevDataSeeder implements CommandLineRunner {
 			return;
 		}
 
-		User juan = createUser("juan.delacruz@cit.edu", "21-1234-567", "Juan", "Dela Cruz", 3, "BSIT", Role.STUDENT);
-		User maria = createUser("maria.santos@cit.edu", "22-2345-678", "Maria", "Santos", 2, "BSCS", Role.STUDENT);
-		createUser("admin@cit.edu", "00-0000-001", "Site", "Admin", null, null, Role.ADMIN);
+		User juan = createUser("juan.delacruz@cit.edu", "22-1001-101", "Juan Dela Cruz", "BSIT", 3, "CCS Building");
+		User mary = createUser("mary.mendoza@cit.edu", "22-1002-102", "Mary Mendoza", "BSIT", 3, "CCS Building");
+		User carlo = createUser("carlo.dizon@cit.edu", "23-1003-103", "Carlo Dizon", "BSCS", 2, "Library");
+		User bea = createUser("bea.cruz@cit.edu", "24-1004-104", "Bea Cruz", "BSIT", 1, "Library");
+		User paolo = createUser("paolo.reyes@cit.edu", "21-1005-105", "Paolo Reyes", "BSEMC", 4, "Gym");
+		User jamie = createUser("jamie.lim@cit.edu", "22-1006-106", "Jamie Lim", "BSCS", 3, "Canteen");
+		User admin = createUser("admin@cit.edu", "00-0000-001", "SideQuest Admin", null, null, null);
+		admin.setRole(Role.ADMIN);
 
-		Category tutoring = createCategory("Tutoring", "Peer tutoring and study help");
-		Category design = createCategory("Design", "Logos, posters, slides and layouts");
-		Category tech = createCategory("Tech Help", "Laptop fixes, installs and setup");
-		Category errands = createCategory("Errands", "Printing, pickups and deliveries on campus");
+		// Juan's meter matches the Figma profile: 8 / 10, next energy in 24 minutes.
+		juan.setEnergy(8);
+		juan.setEnergyUpdatedAt(LocalDateTime.now().minusMinutes(6));
 
-		createListing(juan, tutoring, "Java OOP tutoring (1 hour)",
-				"One-on-one help with classes, inheritance, and interfaces.",
-				"150.00", 1, "Mon, Wed, Fri", "Library, Canteen");
-		createListing(maria, design, "Logo and poster design for your org",
-				"Clean, print-ready designs for events and org pages. Two revisions included.",
-				"300.00", 3, "Tue, Thu, Sat", "Online, Canteen");
-		createListing(juan, tech, "Laptop cleanup and software install",
-				"Remove junk, speed up boot, and install IntelliJ, VS Code, or Office for class.",
-				"200.00", 1, "Mon to Fri", "GLE Building lobby");
-		createListing(maria, errands, "Print and deliver your requirements",
-				"Send the file, I print it and bring it to your room before class.",
-				"50.00", 1, "Mon to Sat", "Anywhere on campus");
-		createListing(maria, tutoring, "Calculus 1 review session",
-				"Exam prep for limits and derivatives with practice problems.",
-				"120.00", 2, "Wed, Sat", "Library");
+		Category printing = createCategory("Printing");
+		Category tutoring = createCategory("Tutoring");
+		Category errands = createCategory("Errands");
+		Category equipment = createCategory("Equipment");
+		Category techHelp = createCategory("Tech Help");
+		Category eventHelp = createCategory("Event Help");
+
+		createQuest(mary, techHelp, "Technical personnel needed!",
+				"We are looking for technical personnel willing to support us during the opening week, "
+						+ "in alliance with the SSG. Setting up laptops, projectors and sound.",
+				QuestSize.LARGE, "300", "CCS Building", 4, QuestStatus.OPEN);
+		createQuest(carlo, tutoring, "Peer tutor needed!",
+				"Looking for a peer tutor for Data Structures: linked lists, stacks and queues before our long quiz.",
+				QuestSize.MEDIUM, "150", "Library", 3, QuestStatus.OPEN);
+		createQuest(bea, printing, "Printing help needed!",
+				"We need someone to print 3 copies of our 20-page group report and bring them to room 301.",
+				QuestSize.SMALL, "50", "Library", 1, QuestStatus.OPEN);
+		createQuest(paolo, eventHelp, "Event helpers needed!",
+				"Help set up chairs, booths and decorations for the CCS week opening program. Half a day.",
+				QuestSize.LARGE, "400", "Gym", 5, QuestStatus.OPEN);
+		createQuest(jamie, techHelp, "Poster designer needed!",
+				"Need a clean poster for ITS week. I will send the text and logo, you send a print-ready file.",
+				QuestSize.MEDIUM, "200", "Online", 2, QuestStatus.OPEN);
+		createQuest(bea, equipment, "Borrow a scientific calculator",
+				"Lending me a scientific calculator for tomorrow's Physics exam. I will return it right after.",
+				QuestSize.SMALL, "40", "Canteen", 1, QuestStatus.OPEN);
+
+		// Waiting for admin review, so it is not on the board yet.
+		createQuest(juan, errands, "Moving boxes help",
+				"Help me carry 6 boxes from the dorm to the CCS org room.",
+				QuestSize.SMALL, "60", "CCS Building", 2, QuestStatus.PENDING);
+
+		// Already taken by Carlo, so it shows as in progress.
+		Quest tutorQuest = createQuest(juan, tutoring, "Tutor for Data Structures",
+				"One review session on trees and graphs before the finals.",
+				QuestSize.MEDIUM, "180", "Library", 3, QuestStatus.IN_PROGRESS);
+		QuestAcceptance acceptance = new QuestAcceptance();
+		acceptance.setQuest(tutorQuest);
+		acceptance.setAdventurer(carlo);
+		acceptanceRepository.save(acceptance);
 	}
 
-	private Category createCategory(String name, String description) {
-		Category category = new Category();
-		category.setCategoryName(name);
-		category.setDescription(description);
-		return categoryRepository.save(category);
-	}
-
-	private void createListing(User seller, Category category, String title, String description,
-			String price, int deliveryDays, String availableDays, String meetupSpots) {
-		Listing listing = new Listing();
-		listing.setSeller(seller);
-		listing.setCategory(category);
-		listing.setTitle(title);
-		listing.setDescription(description);
-		listing.setPrice(new BigDecimal(price));
-		listing.setDeliveryDays(deliveryDays);
-		listing.setAvailableDays(availableDays);
-		listing.setMeetupSpots(meetupSpots);
-		listing.setStatus(ListingStatus.ACTIVE);
-		listingRepository.save(listing);
-	}
-
-	private User createUser(String email, String studentId, String firstName, String lastName,
-			Integer yearLevel, String program, Role role) {
+	private User createUser(String email, String studentId, String fullName, String program,
+			Integer yearLevel, String preferredLocation) {
 		User user = new User();
 		user.setEmail(email);
+		user.setStudentId(studentId);
+		user.setFullName(fullName);
 		user.setPasswordHash(PLACEHOLDER_HASH);
-		user.setStudentIdNumber(studentId);
-		user.setFirstName(firstName);
-		user.setLastName(lastName);
-		user.setYearLevel(yearLevel);
-		user.setProgram(program);
-		user.setRole(role);
-		user.setIsVerified(true);
+		user.setStatus(UserStatus.ACTIVE); // already verified
+		user.setPreferredLocation(preferredLocation);
 		userRepository.save(user);
 
 		Profile profile = new Profile();
 		profile.setUser(user);
-		profile.setDisplayName(firstName + " " + lastName);
+		profile.setProgram(program);
+		profile.setYearLevel(yearLevel);
 		profileRepository.save(profile);
+
+		// TODO (Objective 5): real rank titles once the rank ladder is decided.
+		GuildRank rank = new GuildRank();
+		rank.setUser(user);
+		rank.setRankTitle("Unranked");
+		guildRankRepository.save(rank);
 		return user;
+	}
+
+	private Category createCategory(String name) {
+		Category category = new Category();
+		category.setName(name);
+		return categoryRepository.save(category);
+	}
+
+	private Quest createQuest(User poster, Category category, String title, String description,
+			QuestSize size, String reward, String location, int daysUntilDeadline, QuestStatus status) {
+		Quest quest = new Quest();
+		quest.setPoster(poster);
+		quest.setCategory(category);
+		quest.setTitle(title);
+		quest.setDescription(description);
+		quest.setSize(size);
+		quest.setReward(new BigDecimal(reward));
+		quest.setLocation(location);
+		quest.setDeadline(LocalDateTime.of(LocalDate.now().plusDays(daysUntilDeadline), LocalTime.of(17, 0)));
+		quest.setStatus(status);
+		return questRepository.save(quest);
 	}
 }

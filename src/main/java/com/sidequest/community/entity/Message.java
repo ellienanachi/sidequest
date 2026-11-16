@@ -1,7 +1,7 @@
 package com.sidequest.community.entity;
 
 import com.sidequest.account.entity.User;
-import com.sidequest.listing.entity.Listing;
+import com.sidequest.quest.entity.Quest;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,8 +10,11 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+// Chat message between a quest giver and an adventurer about a quest.
+// Matches the ERD. TODO (Objective 5): the ERD has no receiver or read flag yet,
+// which Figma's "unread conversations" popup would need.
 @Entity
-@Table(name = "message")
+@Table(name = "messages")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,29 +22,20 @@ public class Message {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "message_id")
-	private Long messageId;
+	private Long id;
+
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "quest_id", nullable = false)
+	private Quest quest;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "sender_id", nullable = false)
 	private User sender;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "receiver_id", nullable = false)
-	private User receiver;
-
-	// Optional: a message can be about a specific listing.
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "listing_id")
-	private Listing listing;
-
 	@Column(nullable = false, length = 2000)
-	private String content;
+	private String body;
 
 	@CreationTimestamp
 	@Column(name = "sent_at", nullable = false, updatable = false)
 	private LocalDateTime sentAt;
-
-	@Column(name = "is_read", nullable = false)
-	private Boolean isRead = false;
 }
