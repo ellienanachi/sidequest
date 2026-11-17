@@ -29,24 +29,42 @@ It is a web app that also works on phones (the layout switches to a bottom bar o
 | Build | Maven (wrapper included: `mvnw` / `mvnw.cmd`) |
 | Database | H2 in-memory (dev), PostgreSQL on Render (prod) |
 | Payments | Simulated gateway now; PayMongo test mode later (GCash, Maya, QR Ph) |
-| Frontend | Plain HTML, CSS and JavaScript served by Spring Boot |
+| Frontend | React 19 + Vite (JavaScript) in `frontend/`. The old plain HTML pages in `src/main/resources/static` are being moved over to React. |
 | Security | None yet (TODO: Spring Security + BCrypt) |
 
 ## How to run
 
-Requirements: JDK 25 with `JAVA_HOME` pointing to it. Maven is not needed because the wrapper downloads it.
+Requirements: JDK 25 with `JAVA_HOME` pointing to it, and Node.js 20 or newer. Maven is not needed because the wrapper downloads it.
+
+You need two terminals: one for the backend and one for the frontend.
 
 ```bash
-# Windows PowerShell (VS Code terminal)
-.\mvnw.cmd spring-boot:run
+# Terminal 1, project root: Spring Boot backend on http://localhost:8080
+.\mvnw.cmd spring-boot:run        # Windows PowerShell (VS Code terminal)
+./mvnw spring-boot:run            # Git Bash, macOS, Linux
 
-# Git Bash, macOS, Linux
-./mvnw spring-boot:run
+# Terminal 2: React frontend on http://localhost:5173
+cd frontend
+npm install                       # only the first time
+npm run dev
 ```
 
-Open <http://localhost:8080> for the Quest Board. The app uses the `dev` profile: an H2 database that resets on every restart, filled with sample data.
+Open <http://localhost:5173> for the React app. While developing, Vite passes every `/api/...` request on to Spring Boot (see `frontend/vite.config.js`). The old HTML Quest Board is still at <http://localhost:8080> until it's moved to React.
+
+The backend uses the `dev` profile: an H2 database that resets on every restart, filled with sample data.
 
 Run the tests with `./mvnw test`.
+
+### Seeing the ERD in MySQL Workbench (optional)
+
+The `mysql` profile uses a local MySQL server instead of H2, so MySQL Workbench can draw the ERD from the real tables. You need MySQL Server 8 running on port 3306.
+
+```powershell
+$env:MYSQL_PASSWORD="your MySQL root password"   # never put it in a file
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"
+```
+
+Hibernate creates the `sidequest` schema, all 15 tables and their foreign keys, and the sample data is added. Set `MYSQL_DB` to use another schema name, and `MYSQL_USER` if you don't log in as `root`. Then in Workbench: **Database → Reverse Engineer**, connect, tick `sidequest`, and finish. The EER diagram shows every table with its relationship lines.
 
 | URL | What it shows |
 |---|---|
@@ -63,7 +81,7 @@ Run the tests with `./mvnw test`.
 
 ### Sample data (dev profile only)
 
-`DevDataSeeder` adds 6 students and 1 admin, 6 categories, 6 open quests, 1 quest waiting for admin review and 1 quest in progress. Names and quests follow the Figma prototype. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
+`DevDataSeeder` adds 6 students and 1 admin, 6 categories, 6 open quests, 1 quest waiting for admin review and 1 quest in progress. Names and quests follow the Figma prototype. Each student has sample rank points so every rank shows up, from Bea (Recruit) to Jamie (Legend); Juan is a Squire, like the Figma profile. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
 
 ## Workbook rules in the code
 
@@ -73,6 +91,8 @@ Run the tests with `./mvnw test`.
 | Energy: cap 10 (free) or 20 (Guild Pass), +1 every 30 minutes, accepting costs 1, completing gives 1 back | `transaction/service/EnergyRules` |
 | 10% commission taken when the reward is released; Guild Pass ₱49/month | `transaction/service/RewardRules` |
 | Payment provider interface (charge, refund) | `transaction/gateway/PaymentGateway` |
+| Guild ranks: Recruit 0, Page 30, Squire 80, Knight 160, Champion 300, Legend 500 points (team decision, not in the workbook) | `community/entity/Rank` |
+| Rank points: +10 to the adventurer per completed quest, +5 for receiving a 4 or 5 star review | `community/service/GuildRankRules` |
 
 These rules have unit tests in `src/test`.
 
@@ -117,7 +137,6 @@ Never commit real passwords. `.env` files are git-ignored.
 
 ## Open questions
 
-- Guild rank titles, point thresholds and how points are earned (Figma shows "Squire, rank 3 of 6").
 - How student IDs are verified (photo upload, admin check, ...).
 - Messages in the ERD have no receiver or read flag, but Figma has an "unread conversations" popup.
 - Energy and refund rules when a quest is cancelled, and the refund window.
@@ -125,6 +144,7 @@ Never commit real passwords. `.env` files are git-ignored.
 
 ## TODO
 
+- Move the Quest Board and Quest Details pages to React
 - Spring Security: register with CIT-U email, log in, roles, admin-only endpoints
 - Create/update endpoints with request DTOs and validation
 - Accept → fund → done → confirm flow, Guild Pass, ads
