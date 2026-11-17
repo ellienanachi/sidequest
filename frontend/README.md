@@ -28,5 +28,8 @@ Open <http://localhost:5173>.
 |---|---|
 | `index.html` | The single HTML page. React draws everything inside `<div id="root">`. |
 | `src/main.jsx` | Starts React and renders `<App />` into `#root`. |
-| `src/App.jsx` | The app itself. |
+| `src/App.jsx` | The root component. Decides which page to show. |
+| `src/pages/` | One component per screen, e.g. `QuestBoard.jsx`. Pages fetch their data from `/api`. |
+| `src/components/` | Smaller pieces used by pages, e.g. `QuestCard.jsx`. They get their data through props. |
+| `src/utils/format.js` | Helpers that format values for the screen (`peso`, `titleCase`, `shortName`). |
 | `src/index.css` | Colors, fonts and styles from the Figma prototype. |
