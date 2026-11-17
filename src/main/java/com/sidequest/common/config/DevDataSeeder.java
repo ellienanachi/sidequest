@@ -52,14 +52,18 @@ public class DevDataSeeder implements CommandLineRunner {
 			return;
 		}
 
-		User juan = createUser("juan.delacruz@cit.edu", "22-1001-101", "Juan Dela Cruz", "BSIT", 3, "CCS Building");
-		User mary = createUser("mary.mendoza@cit.edu", "22-1002-102", "Mary Mendoza", "BSIT", 3, "CCS Building");
-		User carlo = createUser("carlo.dizon@cit.edu", "23-1003-103", "Carlo Dizon", "BSCS", 2, "Library");
-		User bea = createUser("bea.cruz@cit.edu", "24-1004-104", "Bea Cruz", "BSIT", 1, "Library");
-		User paolo = createUser("paolo.reyes@cit.edu", "21-1005-105", "Paolo Reyes", "BSEMC", 4, "Gym");
-		User jamie = createUser("jamie.lim@cit.edu", "22-1006-106", "Jamie Lim", "BSCS", 3, "Canteen");
-		User admin = createUser("admin@cit.edu", "00-0000-001", "SideQuest Admin", null, null, null);
+		User juan = createUser("juan.delacruz@cit.edu", "22-1001-101", "Juan Dela Cruz", "BSIT", 3, "CCS Building", 95);
+		User mary = createUser("mary.mendoza@cit.edu", "22-1002-102", "Mary Mendoza", "BSIT", 3, "CCS Building", 40);
+		User carlo = createUser("carlo.dizon@cit.edu", "23-1003-103", "Carlo Dizon", "BSCS", 2, "Library", 175);
+		User bea = createUser("bea.cruz@cit.edu", "24-1004-104", "Bea Cruz", "BSIT", 1, "Library", 0);
+		User paolo = createUser("paolo.reyes@cit.edu", "21-1005-105", "Paolo Reyes", "BSEMC", 4, "Gym", 320);
+		User jamie = createUser("jamie.lim@cit.edu", "22-1006-106", "Jamie Lim", "BSCS", 3, "Canteen", 520);
+		User admin = createUser("admin@cit.edu", "00-0000-001", "SideQuest Admin", null, null, null, 0);
 		admin.setRole(Role.ADMIN);
+
+		// Sample rank points (the last number above), as if earned before today, so every rank
+		// shows up: Bea is a Recruit, Mary a Page, Juan a Squire (rank 3 of 6, like the Figma
+		// profile), Carlo a Knight, Paolo a Champion and Jamie a Legend.
 
 		// Juan's meter matches the Figma profile: 8 / 10, next energy in 24 minutes.
 		juan.setEnergy(8);
@@ -108,7 +112,7 @@ public class DevDataSeeder implements CommandLineRunner {
 	}
 
 	private User createUser(String email, String studentId, String fullName, String program,
-			Integer yearLevel, String preferredLocation) {
+			Integer yearLevel, String preferredLocation, int rankPoints) {
 		User user = new User();
 		user.setEmail(email);
 		user.setStudentId(studentId);
@@ -124,10 +128,10 @@ public class DevDataSeeder implements CommandLineRunner {
 		profile.setYearLevel(yearLevel);
 		profileRepository.save(profile);
 
-		// TODO (Objective 5): real rank titles once the rank ladder is decided.
+		// Starts as a Recruit with 0 points; addPoints moves the title up to match.
 		GuildRank rank = new GuildRank();
 		rank.setUser(user);
-		rank.setRankTitle("Unranked");
+		rank.addPoints(rankPoints);
 		guildRankRepository.save(rank);
 		return user;
 	}

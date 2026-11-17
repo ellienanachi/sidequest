@@ -70,7 +70,7 @@ Run the tests with `./mvnw test`.
 
 ### Sample data (dev profile only)
 
-`DevDataSeeder` adds 6 students and 1 admin, 6 categories, 6 open quests, 1 quest waiting for admin review and 1 quest in progress. Names and quests follow the Figma prototype. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
+`DevDataSeeder` adds 6 students and 1 admin, 6 categories, 6 open quests, 1 quest waiting for admin review and 1 quest in progress. Names and quests follow the Figma prototype. Each student has sample rank points so every rank shows up, from Bea (Recruit) to Jamie (Legend); Juan is a Squire, like the Figma profile. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
 
 ## Workbook rules in the code
 
@@ -80,6 +80,8 @@ Run the tests with `./mvnw test`.
 | Energy: cap 10 (free) or 20 (Guild Pass), +1 every 30 minutes, accepting costs 1, completing gives 1 back | `transaction/service/EnergyRules` |
 | 10% commission taken when the reward is released; Guild Pass ₱49/month | `transaction/service/RewardRules` |
 | Payment provider interface (charge, refund) | `transaction/gateway/PaymentGateway` |
+| Guild ranks: Recruit 0, Page 30, Squire 80, Knight 160, Champion 300, Legend 500 points (team decision, not in the workbook) | `community/entity/Rank` |
+| Rank points: +10 to the adventurer per completed quest, +5 for receiving a 4 or 5 star review | `community/service/GuildRankRules` |
 
 These rules have unit tests in `src/test`.
 
@@ -124,7 +126,6 @@ Never commit real passwords. `.env` files are git-ignored.
 
 ## Open questions
 
-- Guild rank titles, point thresholds and how points are earned (Figma shows "Squire, rank 3 of 6").
 - How student IDs are verified (photo upload, admin check, ...).
 - Messages in the ERD have no receiver or read flag, but Figma has an "unread conversations" popup.
 - Energy and refund rules when a quest is cancelled, and the refund window.
