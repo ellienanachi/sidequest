@@ -26,11 +26,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-// Sample data for local development only (runs with the "dev" profile).
+// Sample data for local development only (runs with the "dev" and "mysql" profiles, never "prod").
 // Names and quests follow the Figma prototype; rewards follow the workbook's size ranges.
 // Full name used for @Profile because our entity is also called Profile.
 @Component
-@org.springframework.context.annotation.Profile("dev")
+@org.springframework.context.annotation.Profile({"dev", "mysql"})
 @RequiredArgsConstructor
 public class DevDataSeeder implements CommandLineRunner {
 

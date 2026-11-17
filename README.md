@@ -55,6 +55,17 @@ The backend uses the `dev` profile: an H2 database that resets on every restart,
 
 Run the tests with `./mvnw test`.
 
+### Seeing the ERD in MySQL Workbench (optional)
+
+The `mysql` profile uses a local MySQL server instead of H2, so MySQL Workbench can draw the ERD from the real tables. You need MySQL Server 8 running on port 3306.
+
+```powershell
+$env:MYSQL_PASSWORD="your MySQL root password"   # never put it in a file
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"
+```
+
+Hibernate creates the `sidequest` schema, all 15 tables and their foreign keys, and the sample data is added. Set `MYSQL_DB` to use another schema name, and `MYSQL_USER` if you don't log in as `root`. Then in Workbench: **Database → Reverse Engineer**, connect, tick `sidequest`, and finish. The EER diagram shows every table with its relationship lines.
+
 | URL | What it shows |
 |---|---|
 | `/` | Quest Board ("Near you"): search, location, size and category filters |
