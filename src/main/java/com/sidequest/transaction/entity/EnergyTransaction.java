@@ -26,7 +26,9 @@ public class EnergyTransaction {
 	private User user;
 
 	// Negative when spent, positive when gained.
-	@Column(name = "change", nullable = false)
+	// CHANGE is a reserved word in MySQL, so the backticks make Hibernate quote it (`change`).
+	// Without them MySQL refuses to create this table. The column is still called "change", as in the ERD.
+	@Column(name = "`change`", nullable = false)
 	private Integer change;
 
 	@Enumerated(EnumType.STRING)
