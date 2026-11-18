@@ -77,11 +77,12 @@ Hibernate creates the `sidequest` schema, all 15 tables and their foreign keys, 
 | `GET /api/quest-sizes` | Reward range and energy cost per size |
 | `GET /api/users` | Users with live energy (never the password hash) |
 | `GET /api/acceptances` | Quest acceptances |
+| `GET /api/profiles/{userId}` | Public profile: program, guild rank with progress to the next rank, average rating and reviews received (no email or student ID) |
 | `/h2-console` | Database console: JDBC URL `jdbc:h2:mem:sidequest`, user `sa`, no password |
 
 ### Sample data (dev profile only)
 
-`DevDataSeeder` adds 6 students and 1 admin, 6 categories, 6 open quests, 1 quest waiting for admin review and 1 quest in progress. Names and quests follow the Figma prototype. Each student has sample rank points so every rank shows up, from Bea (Recruit) to Jamie (Legend); Juan is a Squire, like the Figma profile. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
+`DevDataSeeder` adds 6 students and 1 admin, 6 categories, 6 open quests, 1 quest waiting for admin review, 1 quest in progress, and 3 completed quests with reviews (so profiles have reviews to show). Names and quests follow the Figma prototype. Each student has sample rank points so every rank shows up, from Bea (Recruit) to Jamie (Legend); Juan is a Squire, like the Figma profile. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
 
 ## Workbook rules in the code
 

@@ -7,13 +7,16 @@ import com.sidequest.account.entity.UserStatus;
 import com.sidequest.account.repository.ProfileRepository;
 import com.sidequest.account.repository.UserRepository;
 import com.sidequest.community.entity.GuildRank;
+import com.sidequest.community.entity.Review;
 import com.sidequest.community.repository.GuildRankRepository;
+import com.sidequest.community.repository.ReviewRepository;
 import com.sidequest.quest.entity.Category;
 import com.sidequest.quest.entity.Quest;
 import com.sidequest.quest.entity.QuestSize;
 import com.sidequest.quest.entity.QuestStatus;
 import com.sidequest.quest.repository.CategoryRepository;
 import com.sidequest.quest.repository.QuestRepository;
+import com.sidequest.transaction.entity.AcceptanceStatus;
 import com.sidequest.transaction.entity.QuestAcceptance;
 import com.sidequest.transaction.repository.QuestAcceptanceRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +46,7 @@ public class DevDataSeeder implements CommandLineRunner {
 	private final CategoryRepository categoryRepository;
 	private final QuestRepository questRepository;
 	private final QuestAcceptanceRepository acceptanceRepository;
+	private final ReviewRepository reviewRepository;
 
 	@Override
 	@Transactional
@@ -109,6 +113,44 @@ public class DevDataSeeder implements CommandLineRunner {
 		acceptance.setQuest(tutorQuest);
 		acceptance.setAdventurer(carlo);
 		acceptanceRepository.save(acceptance);
+
+		// Finished quests with reviews, so profiles have reviews to show (Objective 5).
+		// Stand-in data: the real accept -> fund -> complete flow is Objective 4.
+		// The rank points above already count these, so no points are added here.
+		QuestAcceptance thesisPrint = completeQuest(mary, juan, printing, "Print my thesis draft",
+				"Print and bind 2 copies of my 80-page thesis draft.", QuestSize.MEDIUM, "120", "CCS Building");
+		createReview(thesisPrint, mary, 5, "Fast and neat, even bound it for me. Thank you!");
+		createReview(thesisPrint, juan, 4, "Clear instructions and paid right away.");
+
+		QuestAcceptance tripod = completeQuest(paolo, juan, equipment, "Borrow a tripod",
+				"Need a camera tripod for our video shoot this afternoon.", QuestSize.SMALL, "50", "Gym");
+		createReview(tripod, paolo, 4, "Returned on time and in good shape.");
+
+		QuestAcceptance debugging = completeQuest(juan, jamie, techHelp, "Help me fix my Spring Boot error",
+				"My app won't start because of a database error. Help me find out why.", QuestSize.MEDIUM, "150", "Online");
+		createReview(debugging, juan, 5, "Found the problem in 10 minutes and explained it well.");
+		createReview(debugging, jamie, 3, "Okay, but the quest description was missing some details.");
+	}
+
+	// A quest that is already done: the quest and the acceptance are both COMPLETED.
+	private QuestAcceptance completeQuest(User giver, User adventurer, Category category, String title,
+			String description, QuestSize size, String reward, String location) {
+		Quest quest = createQuest(giver, category, title, description, size, reward, location, -3, QuestStatus.COMPLETED);
+		QuestAcceptance acceptance = new QuestAcceptance();
+		acceptance.setQuest(quest);
+		acceptance.setAdventurer(adventurer);
+		acceptance.setStatus(AcceptanceStatus.COMPLETED);
+		acceptance.setCompletedAt(LocalDateTime.now().minusDays(3));
+		return acceptanceRepository.save(acceptance);
+	}
+
+	private void createReview(QuestAcceptance acceptance, User reviewer, int rating, String comment) {
+		Review review = new Review();
+		review.setAcceptance(acceptance);
+		review.setReviewer(reviewer);
+		review.setRating(rating);
+		review.setComment(comment);
+		reviewRepository.save(review);
 	}
 
 	private User createUser(String email, String studentId, String fullName, String program,
