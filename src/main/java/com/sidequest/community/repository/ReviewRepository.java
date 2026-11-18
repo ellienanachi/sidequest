@@ -24,4 +24,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 			order by r.createdAt desc, r.id desc
 			""")
 	List<Review> findReceivedBy(@Param("userId") Long userId);
+
+	// Spring writes this query from the method name: "does a review with this acceptance and reviewer exist?"
+	boolean existsByAcceptanceIdAndReviewerId(Long acceptanceId, Long reviewerId);
 }

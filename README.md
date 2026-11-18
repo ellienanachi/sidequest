@@ -78,6 +78,7 @@ Hibernate creates the `sidequest` schema, all 15 tables and their foreign keys, 
 | `GET /api/users` | Users with live energy (never the password hash) |
 | `GET /api/acceptances` | Quest acceptances |
 | `GET /api/profiles/{userId}` | Public profile: program, guild rank with progress to the next rank, average rating and reviews received (no email or student ID) |
+| `POST /api/reviews` | Review the other side of a completed quest. Body: `{"acceptanceId": 3, "reviewerId": 1, "rating": 5, "comment": "..."}`. 4 or 5 stars gives the reviewed person +5 rank points. Errors: 400 (rule broken or invalid body), 404, 409 (already reviewed) |
 | `/h2-console` | Database console: JDBC URL `jdbc:h2:mem:sidequest`, user `sa`, no password |
 
 ### Sample data (dev profile only)
@@ -121,6 +122,7 @@ com.sidequest
 Conventions:
 
 - Controllers return DTOs (Java records), never entities. `passwordHash` is never exposed.
+- Errors are JSON: `{"error": "..."}`. Throw `NotFoundException` (404), `BadRequestException` (400) or `ConflictException` (409) from `common/web`; `@Valid` failures also become 400.
 - All relationships are `LAZY` and `spring.jpa.open-in-view=false`, so DTOs are built inside `@Transactional` service methods.
 - Table and column names follow the ERD exactly (`users`, `poster_id`, `is_read`, ...).
 
