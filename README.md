@@ -4,7 +4,7 @@ A guild quest board for CIT-U students. Verified Wildcats post what they need he
 
 It is a web app that also works on phones (the layout switches to a bottom bar on small screens).
 
-> **Status:** foundation only. The database (all 15 tables from the ERD), the workbook rules, a simulated payment gateway, read-only endpoints and a Quest Board preview are in place. Posting, accepting, paying, login and moderation are still TODO.
+> **Status:** in progress. The database (all 15 tables from the ERD), the workbook rules, a simulated payment gateway, read-only endpoints and a React Quest Board are in place. Objective 5 has guild ranks, profiles and reviews. Posting and accepting quests, paying, login, reports and moderation are still TODO.
 >
 > **Source of truth:** the requirements workbook (`SML_Software_Requirements_Deliverables.xlsx`). The Figma file is the visual reference.
 
@@ -152,4 +152,4 @@ Never commit real passwords. `.env` files are git-ignored.
 - Create/update endpoints with request DTOs and validation
 - Accept → fund → done → confirm flow, Guild Pass, ads
 - PayMongo test-mode gateway
-- Objective 5: reviews, reports, messaging, guild ranks, admin moderation
+- Objective 5: reports, admin moderation (approve or reject quests, suspend or ban users), messaging. Guild ranks, profiles and reviews are done.
