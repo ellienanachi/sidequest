@@ -41,7 +41,7 @@ public class Quest {
 	@Column(nullable = false, length = 10)
 	private QuestSize size;
 
-	// Must be inside the size's range (see QuestSize).
+	// Must be inside the size's range (Small 30-99, Medium 100-249, Large 250-500).
 	@Column(nullable = false, precision = 10, scale = 2)
 	private BigDecimal reward;
 

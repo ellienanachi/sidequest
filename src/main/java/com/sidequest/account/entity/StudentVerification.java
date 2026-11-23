@@ -48,24 +48,4 @@ public class StudentVerification {
 
 	@Column(name = "reviewed_at")
 	private LocalDateTime reviewedAt;
-
-	// approve() and reject() are the operations in the Class Diagram. They only change this object
-	// and its user; the service checks who may call them, and the transaction saves the result.
-
-	// The ID is real: the account becomes ACTIVE and can use the quest board.
-	public void approve(User admin, LocalDateTime now) {
-		markReviewed(VerificationStatus.APPROVED, admin, now);
-		user.setStatus(UserStatus.ACTIVE);
-	}
-
-	// The ID isn't accepted (blurry, not a CIT-U ID, ...). The account stays PENDING so the student can resubmit.
-	public void reject(User admin, LocalDateTime now) {
-		markReviewed(VerificationStatus.REJECTED, admin, now);
-	}
-
-	private void markReviewed(VerificationStatus newStatus, User admin, LocalDateTime now) {
-		status = newStatus;
-		reviewedBy = admin;
-		reviewedAt = now;
-	}
 }

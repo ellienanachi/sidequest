@@ -43,7 +43,7 @@ public class User {
 	@Column(nullable = false, length = 20)
 	private UserStatus status = UserStatus.PENDING;
 
-	// Stored energy at energyUpdatedAt. The live value adds recovery since then (see EnergyRules).
+	// Stored energy at energyUpdatedAt.
 	@Column(nullable = false)
 	private Integer energy = 10;
 

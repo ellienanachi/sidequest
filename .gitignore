@@ -46,3 +46,6 @@ Thumbs.db
 
 ### Claude Code (local launch config) ###
 .claude/
+
+# practice/skeleton has no frontend. This hides node_modules left over from main.
+frontend/

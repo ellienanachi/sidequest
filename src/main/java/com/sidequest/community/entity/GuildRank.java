@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 // Rank points and title a student earns from completed quests and good ratings.
-// The ladder is in Rank, the point values are in GuildRankRules.
 @Entity
 @Table(name = "guild_ranks")
 @Getter
@@ -28,12 +27,5 @@ public class GuildRank {
 
 	// Stored as text, as in the ERD, e.g. "Squire".
 	@Column(name = "rank_title", nullable = false, length = 50)
-	private String rankTitle = Rank.RECRUIT.getTitle();
-
-	// From the class diagram: +addPoints(n).
-	// Adds the points and moves the title up if a new rank was reached.
-	public void addPoints(int points) {
-		this.rankPoints += points;
-		this.rankTitle = Rank.forPoints(this.rankPoints).getTitle();
-	}
+	private String rankTitle = "Recruit";
 }

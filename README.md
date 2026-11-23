@@ -1,160 +1,69 @@
-# SideQuest/s
+# SideQuest/s — skeleton (practice branch)
 
-A guild quest board for CIT-U students. Verified Wildcats post what they need help with as **quests** (printing, tutoring, errands, borrowing equipment), and other students accept and complete them for a reward held in **escrow**. An **energy** system keeps the board fair, and ratings, reviews, guild ranks and admin moderation keep it trustworthy.
+> **This branch is for practice only. Never merge it into `main`.**
+> The real app is on `main`.
 
-It is a web app that also works on phones (the layout switches to a bottom bar on small screens).
+This is SideQuest/s with every feature removed. Only the **16 entities and their relationships** are left, so the database and the ERD are exactly the same as the real app, but nothing works yet.
 
-> **Status:** in progress. The database (all 16 tables from the ERD), the workbook rules, a simulated payment gateway, read-only endpoints and a React Quest Board are in place. Objective 1 has student ID verification (submit, approve, reject). Objective 5 has guild ranks, profiles and reviews. Posting and accepting quests, paying, login, reports and moderation are still TODO.
->
-> **Source of truth:** the requirements workbook (`SML_Software_Requirements_Deliverables.xlsx`). The Figma file is the visual reference.
+Use it to:
 
-## Team and objectives
+- Study how the tables connect (`@ManyToOne`, `@OneToOne`, `@JoinColumn`).
+- Reverse engineer the full ERD in MySQL Workbench.
+- Practice building a feature from scratch: repository → service → controller.
 
-| Objective | Modules | Owner | Package |
-|---|---|---|---|
-| 1. Account | Account Management | Hynes Gavin Daugdaug | `account` |
-| 2. Quests | Quest Management, Quest Reposting | Hynes Gavin Daugdaug | `quest` |
-| 3. Discovery | Discovery & Browsing (Quest Board), Quest Alerts | Sean Riley Dela Cruz | `discovery` |
-| 4. Transaction | Quest & Reward Transaction, Energy System and Subscription | Sean Riley Dela Cruz | `transaction` |
-| 5. Community | Community Engagement, Guild Rank | Chad Ellie Sanchez | `community` |
-| 5. Moderation | Admin & Moderation | Chad Ellie Sanchez | `admin` |
-| Shared | Health check, errors, dev sample data | everyone | `common` |
+## What was removed
 
-## Tech stack
-
-| Layer | Choice |
+| Removed | Still on `main` |
 |---|---|
-| Language | Java 25 (LTS) |
-| Framework | Spring Boot 3.5.x (Web, Data JPA, Validation, DevTools) |
-| Build | Maven (wrapper included: `mvnw` / `mvnw.cmd`) |
-| Database | H2 in-memory (dev), PostgreSQL on Render (prod) |
-| Payments | Simulated gateway now; PayMongo test mode later (GCash, Maya, QR Ph) |
-| Frontend | React 19 + Vite (JavaScript) in `frontend/`. The old plain HTML pages in `src/main/resources/static` are being moved over to React. |
-| Security | None yet (TODO: Spring Security + BCrypt) |
+| Controllers (every `/api/...` endpoint) | `*/controller` |
+| Services and rules (reviews, student ID checks, energy, rank points, commission) | `*/service` |
+| Repositories, DTOs, the payment gateway | `*/repository`, `*/dto`, `transaction/gateway` |
+| Logic inside entities (`approve()`, `reject()`, `addPoints()`), the `Rank` enum, the reward ranges in `QuestSize` | `*/entity` |
+| Sample data (`DevDataSeeder`), error handling, health check | `common/` |
+| Unit tests | `src/test` |
+| The React frontend and the old HTML pages | `frontend/`, `src/main/resources/static` |
 
-## How to run
+Kept: every entity's fields, relationships, column names, unique constraints and enums, plus Lombok `@Getter`/`@Setter` (not features, just less typing).
 
-Requirements: JDK 25 with `JAVA_HOME` pointing to it, and Node.js 20 or newer. Maven is not needed because the wrapper downloads it.
+## Tables and relationships
 
-You need two terminals: one for the backend and one for the frontend.
+| Objective | Table | Foreign keys |
+|---|---|---|
+| 1. Account | `users` | none (most tables point here) |
+| | `profiles` | `user_id` → users (one-to-one) |
+| | `student_verifications` | `user_id` → users, `reviewed_by` → users |
+| 2. Quests | `categories` | none |
+| | `quests` | `poster_id` → users, `category_id` → categories, `reposted_from_id` → quests (self) |
+| | `quest_photos` | `quest_id` → quests |
+| 3. Discovery | `saved_quests` | `user_id` → users, `quest_id` → quests |
+| | `category_follows` | `user_id` → users, `category_id` → categories |
+| | `notifications` | `user_id` → users, `quest_id` → quests |
+| 4. Transaction | `quest_acceptances` | `quest_id` → quests, `adventurer_id` → users |
+| | `payments` | `payer_id` → users, `acceptance_id` → quest_acceptances |
+| | `energy_transactions` | `user_id` → users |
+| 5. Community | `guild_ranks` | `user_id` → users (one-to-one) |
+| | `messages` | `quest_id` → quests, `sender_id` → users |
+| | `reviews` | `acceptance_id` → quest_acceptances, `reviewer_id` → users |
+| 5. Moderation | `reports` | `reporter_id` → users, `resolved_by` → users |
 
-```bash
-# Terminal 1, project root: Spring Boot backend on http://localhost:8080
-.\mvnw.cmd spring-boot:run        # Windows PowerShell (VS Code terminal)
-./mvnw spring-boot:run            # Git Bash, macOS, Linux
+16 tables, 25 foreign keys.
 
-# Terminal 2: React frontend on http://localhost:5173
-cd frontend
-npm install                       # only the first time
-npm run dev
+## Run it
+
+Needs JDK 25. In IntelliJ: open the project folder and click ▶ on `SidequestSApplication`. Or in a terminal:
+
+```powershell
+.\mvnw.cmd spring-boot:run            # H2 in memory, console at http://localhost:8080/h2-console
 ```
 
-Open <http://localhost:5173> for the React app. While developing, Vite passes every `/api/...` request on to Spring Boot (see `frontend/vite.config.js`). The old HTML Quest Board is still at <http://localhost:8080> until it's moved to React.
+### See the ERD in MySQL Workbench
 
-The backend uses the `dev` profile: an H2 database that resets on every restart, filled with sample data.
-
-Run the tests with `./mvnw test`.
-
-### Seeing the ERD in MySQL Workbench (optional)
-
-The `mysql` profile uses a local MySQL server instead of H2, so MySQL Workbench can draw the ERD from the real tables. You need MySQL Server 8 running on port 3306.
+Use a separate schema so it never mixes with the real app's `sidequest` schema:
 
 ```powershell
 $env:MYSQL_PASSWORD="your MySQL root password"   # never put it in a file
+$env:MYSQL_DB="sidequest_skeleton"
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"
 ```
 
-Hibernate creates the `sidequest` schema, all 16 tables and their foreign keys, and the sample data is added. Set `MYSQL_DB` to use another schema name, and `MYSQL_USER` if you don't log in as `root`. Then in Workbench: **Database → Reverse Engineer**, connect, tick `sidequest`, and finish. The EER diagram shows every table with its relationship lines.
-
-| URL | What it shows |
-|---|---|
-| `/` | Quest Board ("Near you"): search, location, size and category filters |
-| `/quest.html?id=1` | Quest details: what is needed, reward, payout after commission |
-| `GET /api/health` | `{"status":"ok","app":"SideQuest/s"}` |
-| `GET /api/quests` | Open quests. Filters: `q`, `categoryId`, `size` (`SMALL`, `MEDIUM`, `LARGE`), `location` |
-| `GET /api/quests/{id}` | One quest with poster, reward and payout |
-| `GET /api/categories` | Quest categories |
-| `GET /api/quest-sizes` | Reward range and energy cost per size |
-| `GET /api/users` | Users with live energy (never the password hash) |
-| `GET /api/acceptances` | Quest acceptances |
-| `POST /api/verifications` | A pending student submits their ID photo. Body: `{"userId": 8, "idPhotoUrl": "/uploads/ids/25-1007-107.jpg"}`. Errors: 400 (account not pending or invalid body), 404, 409 (one is already waiting) |
-| `GET /api/verifications` | The admin's student ID queue, oldest first. `?status=` `PENDING` (default), `APPROVED` or `REJECTED` |
-| `POST /api/verifications/{id}/approve` | The admin approves the ID and the account becomes `ACTIVE`. Body: `{"adminId": 7}`. Errors: 400 (not an admin), 404, 409 (already reviewed) |
-| `POST /api/verifications/{id}/reject` | The admin rejects the ID; the account stays `PENDING` so the student can resubmit. Same body and errors |
-| `GET /api/profiles/{userId}` | Public profile: program, guild rank with progress to the next rank, average rating and reviews received (no email or student ID) |
-| `POST /api/reviews` | Review the other side of a completed quest. Body: `{"acceptanceId": 3, "reviewerId": 1, "rating": 5, "comment": "..."}`. 4 or 5 stars gives the reviewed person +5 rank points. Errors: 400 (rule broken or invalid body), 404, 409 (already reviewed) |
-| `/h2-console` | Database console: JDBC URL `jdbc:h2:mem:sidequest`, user `sa`, no password |
-
-### Sample data (dev profile only)
-
-`DevDataSeeder` adds 7 students and 1 admin, 6 categories, 7 open quests (one is a repost of a finished quest), 1 quest waiting for admin review, 1 quest in progress, and 3 completed quests with reviews (so profiles have reviews to show). Nico is a new student whose account is `PENDING`, with his student ID waiting in the admin's queue; Juan's ID was already approved. Names and quests follow the Figma prototype. Each student has sample rank points so every rank shows up, from Bea (Recruit) to Jamie (Legend); Juan is a Squire, like the Figma profile. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
-
-## Workbook rules in the code
-
-| Rule | Where |
-|---|---|
-| Sizes: Small ₱30–99 (1 energy), Medium ₱100–249 (2), Large ₱250–500 (3) | `quest/entity/QuestSize` |
-| Energy: cap 10 (free) or 20 (Guild Pass), +1 every 30 minutes, accepting costs 1, completing gives 1 back | `transaction/service/EnergyRules` |
-| 10% commission taken when the reward is released; Guild Pass ₱49/month | `transaction/service/RewardRules` |
-| Payment provider interface (charge, refund) | `transaction/gateway/PaymentGateway` |
-| Guild ranks: Recruit 0, Page 30, Squire 80, Knight 160, Champion 300, Legend 500 points (team decision, not in the workbook) | `community/entity/Rank` |
-| Rank points: +10 to the adventurer per completed quest, +5 for receiving a 4 or 5 star review | `community/service/GuildRankRules` |
-
-These rules have unit tests in `src/test`.
-
-### Status values
-
-Student IDs: `PENDING` → `APPROVED` (the account becomes `ACTIVE`) or `REJECTED` (the student can submit again).
-
-Quests: `PENDING` (waiting for admin) → `OPEN` (on the board) → `IN_PROGRESS` → `COMPLETED`, or `CANCELLED`, `REJECTED`, `EXPIRED`.
-
-Acceptances (the escrow steps): `ACCEPTED` → `FUNDED` → `DONE` → `COMPLETED`, or `DISPUTED`, `CANCELLED`, `REFUNDED`.
-
-## Package layout
-
-Base package `com.sidequest`. Each feature package has `entity/`, `repository/`, `service/`, `controller/` and `dto/`.
-
-```
-com.sidequest
-├── account       users, profiles, student_verifications
-├── quest         categories, quests (+ reposted_from_id), quest_photos
-├── discovery     saved_quests, category_follows, notifications
-├── transaction   quest_acceptances, payments, energy_transactions, gateway/
-├── community     guild_ranks, messages, reviews
-├── admin         reports
-└── common        config (DevDataSeeder), web (health, errors)
-```
-
-Conventions:
-
-- Controllers return DTOs (Java records), never entities. `passwordHash` is never exposed.
-- Errors are JSON: `{"error": "..."}`. Throw `NotFoundException` (404), `BadRequestException` (400) or `ConflictException` (409) from `common/web`; `@Valid` failures also become 400.
-- All relationships are `LAZY` and `spring.jpa.open-in-view=false`, so DTOs are built inside `@Transactional` service methods.
-- Table and column names follow the ERD exactly (`users`, `poster_id`, `is_read`, ...).
-
-## Deploying (later)
-
-The workbook plans Render (web service + PostgreSQL). Set these environment variables on the server:
-
-| Variable | Example |
-|---|---|
-| `SPRING_PROFILES_ACTIVE` | `prod` |
-| `DB_URL` | `jdbc:postgresql://<host>:5432/sidequest` |
-| `DB_USERNAME`, `DB_PASSWORD` | from the Render database page |
-
-Never commit real passwords. `.env` files are git-ignored.
-
-## Open questions
-
-- Messages in the ERD have no receiver or read flag, but Figma has an "unread conversations" popup.
-- Energy and refund rules when a quest is cancelled, and the refund window.
-- What happens if a quest giver never funds an accepted quest.
-
-## TODO
-
-- Move the Quest Board and Quest Details pages to React
-- Spring Security: register with CIT-U email, log in, roles, admin-only endpoints
-- Create/update endpoints with request DTOs and validation
-- Accept → fund → done → confirm flow, Guild Pass, ads
-- PayMongo test-mode gateway
-- Objective 5: reports, admin moderation (approve or reject quests, suspend or ban users), messaging. Guild ranks, profiles and reviews are done.
+Then **Database → Reverse Engineer**, tick `sidequest_skeleton`, and finish.
