@@ -141,6 +141,11 @@ public class DevDataSeeder implements CommandLineRunner {
 				"My app won't start because of a database error. Help me find out why.", QuestSize.MEDIUM, "150", "Online");
 		createReview(debugging, juan, 5, "Found the problem in 10 minutes and explained it well.");
 		createReview(debugging, jamie, 3, "Okay, but the quest description was missing some details.");
+
+		// Quest Reposting (Objective 2): Mary's thesis print went well, so she posted it again for the final copy.
+		Quest finalPrint = createQuest(mary, printing, "Print my thesis draft",
+				"Print and bind 2 copies of my 80-page thesis draft.", QuestSize.MEDIUM, "120", "CCS Building", 6, QuestStatus.OPEN);
+		finalPrint.setRepostedFrom(thesisPrint.getQuest());
 	}
 
 	// A quest that is already done: the quest and the acceptance are both COMPLETED.
