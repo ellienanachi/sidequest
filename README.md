@@ -4,7 +4,7 @@ A guild quest board for CIT-U students. Verified Wildcats post what they need he
 
 It is a web app that also works on phones (the layout switches to a bottom bar on small screens).
 
-> **Status:** in progress. The database (all 15 tables from the ERD), the workbook rules, a simulated payment gateway, read-only endpoints and a React Quest Board are in place. Objective 5 has guild ranks, profiles and reviews. Posting and accepting quests, paying, login, reports and moderation are still TODO.
+> **Status:** in progress. The database (all 16 tables from the ERD), the workbook rules, a simulated payment gateway, read-only endpoints and a React Quest Board are in place. Objective 1 has student ID verification (submit, approve, reject). Objective 5 has guild ranks, profiles and reviews. Posting and accepting quests, paying, login, reports and moderation are still TODO.
 >
 > **Source of truth:** the requirements workbook (`SML_Software_Requirements_Deliverables.xlsx`). The Figma file is the visual reference.
 
@@ -64,7 +64,7 @@ $env:MYSQL_PASSWORD="your MySQL root password"   # never put it in a file
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"
 ```
 
-Hibernate creates the `sidequest` schema, all 15 tables and their foreign keys, and the sample data is added. Set `MYSQL_DB` to use another schema name, and `MYSQL_USER` if you don't log in as `root`. Then in Workbench: **Database → Reverse Engineer**, connect, tick `sidequest`, and finish. The EER diagram shows every table with its relationship lines.
+Hibernate creates the `sidequest` schema, all 16 tables and their foreign keys, and the sample data is added. Set `MYSQL_DB` to use another schema name, and `MYSQL_USER` if you don't log in as `root`. Then in Workbench: **Database → Reverse Engineer**, connect, tick `sidequest`, and finish. The EER diagram shows every table with its relationship lines.
 
 | URL | What it shows |
 |---|---|
@@ -77,13 +77,17 @@ Hibernate creates the `sidequest` schema, all 15 tables and their foreign keys, 
 | `GET /api/quest-sizes` | Reward range and energy cost per size |
 | `GET /api/users` | Users with live energy (never the password hash) |
 | `GET /api/acceptances` | Quest acceptances |
+| `POST /api/verifications` | A pending student submits their ID photo. Body: `{"userId": 8, "idPhotoUrl": "/uploads/ids/25-1007-107.jpg"}`. Errors: 400 (account not pending or invalid body), 404, 409 (one is already waiting) |
+| `GET /api/verifications` | The admin's student ID queue, oldest first. `?status=` `PENDING` (default), `APPROVED` or `REJECTED` |
+| `POST /api/verifications/{id}/approve` | The admin approves the ID and the account becomes `ACTIVE`. Body: `{"adminId": 7}`. Errors: 400 (not an admin), 404, 409 (already reviewed) |
+| `POST /api/verifications/{id}/reject` | The admin rejects the ID; the account stays `PENDING` so the student can resubmit. Same body and errors |
 | `GET /api/profiles/{userId}` | Public profile: program, guild rank with progress to the next rank, average rating and reviews received (no email or student ID) |
 | `POST /api/reviews` | Review the other side of a completed quest. Body: `{"acceptanceId": 3, "reviewerId": 1, "rating": 5, "comment": "..."}`. 4 or 5 stars gives the reviewed person +5 rank points. Errors: 400 (rule broken or invalid body), 404, 409 (already reviewed) |
 | `/h2-console` | Database console: JDBC URL `jdbc:h2:mem:sidequest`, user `sa`, no password |
 
 ### Sample data (dev profile only)
 
-`DevDataSeeder` adds 6 students and 1 admin, 6 categories, 6 open quests, 1 quest waiting for admin review, 1 quest in progress, and 3 completed quests with reviews (so profiles have reviews to show). Names and quests follow the Figma prototype. Each student has sample rank points so every rank shows up, from Bea (Recruit) to Jamie (Legend); Juan is a Squire, like the Figma profile. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
+`DevDataSeeder` adds 7 students and 1 admin, 6 categories, 7 open quests (one is a repost of a finished quest), 1 quest waiting for admin review, 1 quest in progress, and 3 completed quests with reviews (so profiles have reviews to show). Nico is a new student whose account is `PENDING`, with his student ID waiting in the admin's queue; Juan's ID was already approved. Names and quests follow the Figma prototype. Each student has sample rank points so every rank shows up, from Bea (Recruit) to Jamie (Legend); Juan is a Squire, like the Figma profile. Every password hash is the placeholder `CHANGE_ME`; these are not real accounts.
 
 ## Workbook rules in the code
 
@@ -100,6 +104,8 @@ These rules have unit tests in `src/test`.
 
 ### Status values
 
+Student IDs: `PENDING` → `APPROVED` (the account becomes `ACTIVE`) or `REJECTED` (the student can submit again).
+
 Quests: `PENDING` (waiting for admin) → `OPEN` (on the board) → `IN_PROGRESS` → `COMPLETED`, or `CANCELLED`, `REJECTED`, `EXPIRED`.
 
 Acceptances (the escrow steps): `ACCEPTED` → `FUNDED` → `DONE` → `COMPLETED`, or `DISPUTED`, `CANCELLED`, `REFUNDED`.
@@ -110,8 +116,8 @@ Base package `com.sidequest`. Each feature package has `entity/`, `repository/`,
 
 ```
 com.sidequest
-├── account       users, profiles
-├── quest         categories, quests, quest_photos
+├── account       users, profiles, student_verifications
+├── quest         categories, quests (+ reposted_from_id), quest_photos
 ├── discovery     saved_quests, category_follows, notifications
 ├── transaction   quest_acceptances, payments, energy_transactions, gateway/
 ├── community     guild_ranks, messages, reviews
@@ -140,7 +146,6 @@ Never commit real passwords. `.env` files are git-ignored.
 
 ## Open questions
 
-- How student IDs are verified (photo upload, admin check, ...).
 - Messages in the ERD have no receiver or read flag, but Figma has an "unread conversations" popup.
 - Energy and refund rules when a quest is cancelled, and the refund window.
 - What happens if a quest giver never funds an accepted quest.

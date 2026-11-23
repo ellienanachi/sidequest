@@ -2,9 +2,12 @@ package com.sidequest.common.config;
 
 import com.sidequest.account.entity.Profile;
 import com.sidequest.account.entity.Role;
+import com.sidequest.account.entity.StudentVerification;
 import com.sidequest.account.entity.User;
 import com.sidequest.account.entity.UserStatus;
+import com.sidequest.account.entity.VerificationStatus;
 import com.sidequest.account.repository.ProfileRepository;
+import com.sidequest.account.repository.StudentVerificationRepository;
 import com.sidequest.account.repository.UserRepository;
 import com.sidequest.community.entity.GuildRank;
 import com.sidequest.community.entity.Review;
@@ -47,6 +50,7 @@ public class DevDataSeeder implements CommandLineRunner {
 	private final QuestRepository questRepository;
 	private final QuestAcceptanceRepository acceptanceRepository;
 	private final ReviewRepository reviewRepository;
+	private final StudentVerificationRepository verificationRepository;
 
 	@Override
 	@Transactional
@@ -64,6 +68,13 @@ public class DevDataSeeder implements CommandLineRunner {
 		User jamie = createUser("jamie.lim@cit.edu", "22-1006-106", "Jamie Lim", "BSCS", 3, "Canteen", 520);
 		User admin = createUser("admin@cit.edu", "00-0000-001", "SideQuest Admin", null, null, null, 0);
 		admin.setRole(Role.ADMIN);
+
+		// Student ID checks (Objective 1). Juan's was approved by the admin; Nico just registered,
+		// so his account is PENDING and his ID is waiting in the admin's queue.
+		createVerification(juan, "/uploads/ids/22-1001-101.jpg", VerificationStatus.APPROVED, admin);
+		User nico = createUser("nico.santos@cit.edu", "25-1007-107", "Nico Santos", "BSIT", 1, "CCS Building", 0);
+		nico.setStatus(UserStatus.PENDING);
+		createVerification(nico, "/uploads/ids/25-1007-107.jpg", VerificationStatus.PENDING, null);
 
 		// Sample rank points (the last number above), as if earned before today, so every rank
 		// shows up: Bea is a Recruit, Mary a Page, Juan a Squire (rank 3 of 6, like the Figma
@@ -130,6 +141,11 @@ public class DevDataSeeder implements CommandLineRunner {
 				"My app won't start because of a database error. Help me find out why.", QuestSize.MEDIUM, "150", "Online");
 		createReview(debugging, juan, 5, "Found the problem in 10 minutes and explained it well.");
 		createReview(debugging, jamie, 3, "Okay, but the quest description was missing some details.");
+
+		// Quest Reposting (Objective 2): Mary's thesis print went well, so she posted it again for the final copy.
+		Quest finalPrint = createQuest(mary, printing, "Print my thesis draft",
+				"Print and bind 2 copies of my 80-page thesis draft.", QuestSize.MEDIUM, "120", "CCS Building", 6, QuestStatus.OPEN);
+		finalPrint.setRepostedFrom(thesisPrint.getQuest());
 	}
 
 	// A quest that is already done: the quest and the acceptance are both COMPLETED.
@@ -151,6 +167,20 @@ public class DevDataSeeder implements CommandLineRunner {
 		review.setRating(rating);
 		review.setComment(comment);
 		reviewRepository.save(review);
+	}
+
+	private void createVerification(User user, String idPhotoUrl, VerificationStatus status, User reviewer) {
+		StudentVerification verification = new StudentVerification();
+		verification.setUser(user);
+		verification.setIdPhotoUrl(idPhotoUrl);
+		// Save first so submittedAt is filled in, then review it the same way the admin endpoint does.
+		verificationRepository.save(verification);
+		LocalDateTime reviewedAt = LocalDateTime.now(); // just after submittedAt
+		if (status == VerificationStatus.APPROVED) {
+			verification.approve(reviewer, reviewedAt);
+		} else if (status == VerificationStatus.REJECTED) {
+			verification.reject(reviewer, reviewedAt);
+		}
 	}
 
 	private User createUser(String email, String studentId, String fullName, String program,

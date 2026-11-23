@@ -57,4 +57,11 @@ public class Quest {
 	@CreationTimestamp
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
+
+	// Quest Reposting (Objective 2): the earlier quest this one was copied from. Null for a new quest.
+	// A self-reference: quests.reposted_from_id -> quests.id, so Workbench draws a line from quests to itself.
+	// One quest can be reposted many times, so this is @ManyToOne.
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "reposted_from_id")
+	private Quest repostedFrom;
 }
