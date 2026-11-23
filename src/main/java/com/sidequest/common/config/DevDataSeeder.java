@@ -2,9 +2,12 @@ package com.sidequest.common.config;
 
 import com.sidequest.account.entity.Profile;
 import com.sidequest.account.entity.Role;
+import com.sidequest.account.entity.StudentVerification;
 import com.sidequest.account.entity.User;
 import com.sidequest.account.entity.UserStatus;
+import com.sidequest.account.entity.VerificationStatus;
 import com.sidequest.account.repository.ProfileRepository;
+import com.sidequest.account.repository.StudentVerificationRepository;
 import com.sidequest.account.repository.UserRepository;
 import com.sidequest.community.entity.GuildRank;
 import com.sidequest.community.entity.Review;
@@ -47,6 +50,7 @@ public class DevDataSeeder implements CommandLineRunner {
 	private final QuestRepository questRepository;
 	private final QuestAcceptanceRepository acceptanceRepository;
 	private final ReviewRepository reviewRepository;
+	private final StudentVerificationRepository verificationRepository;
 
 	@Override
 	@Transactional
@@ -64,6 +68,13 @@ public class DevDataSeeder implements CommandLineRunner {
 		User jamie = createUser("jamie.lim@cit.edu", "22-1006-106", "Jamie Lim", "BSCS", 3, "Canteen", 520);
 		User admin = createUser("admin@cit.edu", "00-0000-001", "SideQuest Admin", null, null, null, 0);
 		admin.setRole(Role.ADMIN);
+
+		// Student ID checks (Objective 1). Juan's was approved by the admin; Nico just registered,
+		// so his account is PENDING and his ID is waiting in the admin's queue.
+		createVerification(juan, "/uploads/ids/22-1001-101.jpg", VerificationStatus.APPROVED, admin);
+		User nico = createUser("nico.santos@cit.edu", "25-1007-107", "Nico Santos", "BSIT", 1, "CCS Building", 0);
+		nico.setStatus(UserStatus.PENDING);
+		createVerification(nico, "/uploads/ids/25-1007-107.jpg", VerificationStatus.PENDING, null);
 
 		// Sample rank points (the last number above), as if earned before today, so every rank
 		// shows up: Bea is a Recruit, Mary a Page, Juan a Squire (rank 3 of 6, like the Figma
@@ -151,6 +162,18 @@ public class DevDataSeeder implements CommandLineRunner {
 		review.setRating(rating);
 		review.setComment(comment);
 		reviewRepository.save(review);
+	}
+
+	private void createVerification(User user, String idPhotoUrl, VerificationStatus status, User reviewer) {
+		StudentVerification verification = new StudentVerification();
+		verification.setUser(user);
+		verification.setIdPhotoUrl(idPhotoUrl);
+		verification.setStatus(status);
+		if (reviewer != null) {
+			verification.setReviewedBy(reviewer);
+			verification.setReviewedAt(LocalDateTime.now().minusDays(30));
+		}
+		verificationRepository.save(verification);
 	}
 
 	private User createUser(String email, String studentId, String fullName, String program,
