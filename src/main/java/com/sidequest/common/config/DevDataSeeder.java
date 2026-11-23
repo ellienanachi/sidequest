@@ -173,12 +173,14 @@ public class DevDataSeeder implements CommandLineRunner {
 		StudentVerification verification = new StudentVerification();
 		verification.setUser(user);
 		verification.setIdPhotoUrl(idPhotoUrl);
-		verification.setStatus(status);
-		if (reviewer != null) {
-			verification.setReviewedBy(reviewer);
-			verification.setReviewedAt(LocalDateTime.now().minusDays(30));
-		}
+		// Save first so submittedAt is filled in, then review it the same way the admin endpoint does.
 		verificationRepository.save(verification);
+		LocalDateTime reviewedAt = LocalDateTime.now(); // just after submittedAt
+		if (status == VerificationStatus.APPROVED) {
+			verification.approve(reviewer, reviewedAt);
+		} else if (status == VerificationStatus.REJECTED) {
+			verification.reject(reviewer, reviewedAt);
+		}
 	}
 
 	private User createUser(String email, String studentId, String fullName, String program,
